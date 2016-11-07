@@ -14,33 +14,53 @@ db = sqlite3.connect(DATABASE_STRESS)
 
 modules.initdb(db)
 
-select = input("1.注册\n2.登录\n")
+select = input("1.注册\n2.登录\n3.退出\n")
 
-while select != "1" and select != "2":
+while select != "1" and select != "2" and select != "3":
 	print("请输入正确的选项！")
-	select = input("1.注册\n2.登录\n")
+	select = input("1.注册\n2.登录\n3.退出\n")
 
-if select == "1":
+if select == "3":
+	quit()
+elif select == "1":
 	modules.regist(db)
 
 while IS_LOG == False:
 	USERNAME, IS_LOG, AUTH = modules.login(db)
 
-print(USERNAME + '\t' + AUTH)
+print("登录成功!\n")
 
-if AUTH == "admin":
-	select = input("1.加入题目\n请做出你的选择:\n")
-	if select == "1":
-		print("你选择了'1.加入题目'")
-		modules.addquestion(db)
-elif AUTH == "user":
-	select = input("1.生成考试\n请做出你的选择:\n")
-	if select == "1":
-		print("你选择了1.生成考试")
-		num = input("请输入你需要的题目数量:\n")
-		print("将为你随机生成" + str(num) + "道题目")
-		exam = modules.cre8exam(num, db)
-		ans = modules.examination(exam)
-		modules.submitans(USERNAME, ans, db)
-
+while 1:
+	if AUTH == "admin":
+		select = input("1.加入题目\n2.退出\n")
+		if select != "2" and select != "1":
+			print("请输入正确的选项！")
+			continue
+		elif select == "2":
+			quit()
+		elif select == "1":
+			print("你选择了'1.加入题目'")
+			modules.addquestion(db)
+	elif AUTH == "user":
+		select = input("1.生成考试\n2.退出\n")
+		if select != "2" and select != "1":
+			print("请输入正确的选项！")
+			continue
+		if select == "2":
+			quit()
+		elif select == "1":
+			print("你选择了1.生成考试")
+			num = input("请输入你需要的题目数量:\n")
+			while int(num) <= 0:
+				print("请输入正确的数量")
+				num = input("请输入你需要的题目数量:\n")
+			print("将为你随机生成" + num + "道题目...")
+			problem, src = modules.cre8exam(num, db)
+			num = int(num)
+			ans = modules.exam(num, problem)
+			score = modules.submit(USERNAME, ans, src, db)
+			print("你的得分是:" + str(score))
+			select = input("是否要继续(Yes or No):\n")
+			if select.lower() == "no":
+				quit()
 db.close()
