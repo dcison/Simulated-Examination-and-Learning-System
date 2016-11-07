@@ -28,26 +28,38 @@ elif select == "1":
 while IS_LOG == False:
 	USERNAME, IS_LOG, AUTH = modules.login(db)
 
-print("登录成功!")
+print("登录成功!\n")
 
 while 1:
 	if AUTH == "admin":
 		select = input("1.加入题目\n2.退出\n")
-		if select == "2":
+		if select != "2" and select != "1":
+			print("请输入正确的选项！")
+			continue
+		elif select == "2":
 			quit()
 		elif select == "1":
 			print("你选择了'1.加入题目'")
 			modules.addquestion(db)
 	elif AUTH == "user":
 		select = input("1.生成考试\n2.退出\n")
+		if select != "2" and select != "1":
+			print("请输入正确的选项！")
+			continue
 		if select == "2":
 			quit()
 		elif select == "1":
 			print("你选择了1.生成考试")
 			num = input("请输入你需要的题目数量:\n")
-			print("将为你随机生成" + str(num) + "道题目")
-			exam = modules.cre8exam(num, db)
-			ans = modules.examination(exam)
-			modules.submitans(USERNAME, ans, db)
+			while int(num) <= 0:
+				print("请输入正确的数量")
+				num = input("请输入你需要的题目数量:\n")
+			print("将为你随机生成" + num + "道题目...")
+			problem, src = modules.cre8exam(num, db)
+			num = int(num)
+			print(problem)
+			print(src)
+			#ans = modules.examination(exam)
+			#modules.submit(USERNAME, ans, db)
 
 db.close()

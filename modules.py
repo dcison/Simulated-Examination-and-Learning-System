@@ -1,8 +1,9 @@
 import sqlite3
+import random
 
 def login(db):
-	user = input("请输入你要登录的账户名:")
-	password = input("请输入你的密码:")
+	user = input("请输入你要登录的账户名:\n")
+	password = input("请输入你的密码:\n")
 	dx = db.cursor()
 	dx.execute("select username, password, authority  from auth")
 	user_tuple = dx.fetchall()
@@ -13,7 +14,7 @@ def login(db):
 		ua_dic[item[0]] = item[2]
 	if user not in up_dic:
 		print("用户名不存在，请注册！")
-		select = input("选择是否要注册(Yes or No)")
+		select = input("选择是否要注册(Yes or No)\n")
 		if select.lower() == "yes":
 			regist(db)
 		return "", False, ""
@@ -31,16 +32,16 @@ def regist(db):
 	username_list = list()
 	for item in username_tuple:
 		username_list.append(item[0])
-	user = input("请输入你要注册的账户名:")
+	user = input("请输入你要注册的账户名:\n")
 	while user in username_list:
 		print("改账号名已经存在，请重试")
-		user = input("请输入你要注册的账户名:")
-	password = input("请输入你的密码:")
-	repeat = input("请重新输入你的密码:")
+		user = input("请输入你要注册的账户名:\n")
+	password = input("请输入你的密码:\n")
+	repeat = input("请重新输入你的密码:\n")
 	while password != repeat:
 		print("密码不相同请重试")
-		password = input("请输入你的密码:")
-		repeat = input("请重新输入你的密码:")
+		password = input("请输入你的密码:\n")
+		repeat = input("请重新输入你的密码:\n")
 	dx.execute('INSERT INTO auth(username,password,authority) VALUES(?,?,?)',(user, password,"user"))
 	db.commit()
 
@@ -83,19 +84,34 @@ def addquestion(db):
 			chc += 1
 			options += "\n"
 		print(options)
-	st_ans = input("请输入标准答案")
+	st_ans = input("请输入标准答案:\n")
 	if questype == "选择":
 		dx.execute('INSERT INTO question(description,options,type,st_answer) VALUES(?,?,?,?)',(description,options,questype,st_ans))
-		print("你添加了一道选择题")
+		print("你添加了一道选择题\n")
 	else:
 		dx.execute('INSERT INTO question(description,type,st_answer) VALUES(?,?,?)',(description,questype,st_ans))
-		print("你添加了一道判断题")
+		print("你添加了一道判断题\n")
 	db.commit()
 
 def cre8exam(num, db):
-	lis = []
-	print("生成试卷成功！")
-	return lis
+	dx = db.cursor()
+	dx.execute("select id, type, description, options from question")
+	problem_tuple = dx.fetchall()
+	problem_list = list()
+	src_list = list()
+	while int(num) > len(problem_tuple):
+		print("题库目前只有" + str(len(problem_tuple)) + "道题目，请输入小于等于" + str(len(problem_tuple)) + "的数目")
+		num = input("请输入你需要的题目数量:\n")
+	num = int(num)
+	randm = list()
+	for i in range(0, len(problem_tuple)):
+		randm.append(i)
+	random.shuffle(randm)
+	randm = randm[:num]
+	for i in randm:
+		problem_list.append(problem_tuple[i])
+		src_list.append(problem_tuple[i][0])
+	return problem_list, src_list
 
 def examination(exam):
 	print("开始考试！")
