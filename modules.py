@@ -13,7 +13,9 @@ def login(db):
 		ua_dic[item[0]] = item[2]
 	if user not in up_dic:
 		print("用户名不存在，请注册！")
-		regist(db)
+		select = input("选择是否要注册(Yes or No)")
+		if select.lower() == "yes":
+			regist(db)
 		return "", False, ""
 	else:
 		if(up_dic[user] == password):
@@ -69,10 +71,26 @@ def initdb(db):
 	db.commit()
 
 def addquestion(db):
+	dx = db.cursor()
 	questype = input("请输入问题的类型(选择or判断):\n")
 	description = input("请输入问题的描述:\n")
+	options = ""
 	if questype == "选择":
-		options = input("请输入问题的选项...\n")
+		chc = 65
+		for i in range(0, 4):
+			options += chr(chc) + " "
+			options += input("请输入"+chr(chc)+"的选项:\n")
+			chc += 1
+			options += "\n"
+		print(options)
+	st_ans = input("请输入标准答案")
+	if questype == "选择":
+		dx.execute('INSERT INTO question(description,options,type,st_answer) VALUES(?,?,?,?)',(description,options,questype,st_ans))
+		print("你添加了一道选择题")
+	else:
+		dx.execute('INSERT INTO question(description,type,st_answer) VALUES(?,?,?)',(description,questype,st_ans))
+		print("你添加了一道判断题")
+	db.commit()
 
 def cre8exam(num, db):
 	lis = []
@@ -91,6 +109,6 @@ def judge(ans, db):
 	print("正在判分，请稍等...")
 	return 100
 
-def submitans(user, ans, db):
+def submit(user, ans, db):
 	score = str(judge(ans, db))
 	print(user + "\t" + ans + "\t" + score)
