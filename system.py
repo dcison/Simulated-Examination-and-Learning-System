@@ -57,9 +57,10 @@ while 1:
 			print("将为你随机生成" + num + "道题目...")
 			problem, src = modules.cre8exam(num, db)
 			num = int(num)
-			print(problem)
-			print(src)
-			#ans = modules.examination(exam)
-			#modules.submit(USERNAME, ans, db)
-
+			ans = modules.exam(num, problem)
+			score = modules.submit(USERNAME, ans, src, db)
+			print("你的得分是:" + str(score))
+			select = input("是否要继续(Yes or No):\n")
+			if select.lower() == "no":
+				quit()
 db.close()

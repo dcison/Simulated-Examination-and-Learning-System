@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import random
 
@@ -113,18 +114,34 @@ def cre8exam(num, db):
 		src_list.append(problem_tuple[i][0])
 	return problem_list, src_list
 
-def examination(exam):
-	print("开始考试！")
+def exam(num, problem):
+	print("考试开始！")
 	ans = ""
-	for item in exam:
-		select = input("选择你的答案:\n")
-		print(exam)
+	for i in range(0, num):
+		print(str(i+1) + "." + problem[i][2])
+		if problem[i][1] == "选择":
+			print(problem[i][3])
+		if problem[i][1] == "选择":
+			ans += input("请选择（A,B,C或者D):\n").upper()
+		elif problem[i][1] == "判断":
+			ans += input("请选择（T或者F):\n").upper()
 	return ans
 
-def judge(ans, db):
+def judge(ans, st):
 	print("正在判分，请稍等...")
-	return 100
+	tot = len(st)
+	score = 100
+	for i in range(0, tot):
+		if ans[i] != st[i]:
+			score -= 100 // tot;
+	return score
 
-def submit(user, ans, db):
-	score = str(judge(ans, db))
-	print(user + "\t" + ans + "\t" + score)
+def submit(user, ans, src, db):
+	dx = db.cursor()
+	dx.execute("select id, st_answer from question")
+	problem_tuple = dx.fetchall()
+	standard = ""
+	for i in src:
+		standard += problem_tuple[i-1][1]
+	score = judge(ans, standard)
+	return score
