@@ -7,10 +7,10 @@ def login(db):
 	password = input("请输入你的密码:\n")
 	dx = db.cursor()
 	dx.execute("select username, password, authority  from auth")
-	user_tuple = dx.fetchall()
+	user_turple = dx.fetchall()
 	up_dic = dict()
 	ua_dic = dict()
-	for item in user_tuple:
+	for item in user_turple:
 		up_dic[item[0]] = item[1]
 		ua_dic[item[0]] = item[2]
 	if user not in up_dic:
@@ -29,9 +29,9 @@ def login(db):
 def regist(db):
 	dx = db.cursor()
 	dx.execute("select username from auth")
-	username_tuple = dx.fetchall()
+	username_turple = dx.fetchall()
 	username_list = list()
-	for item in username_tuple:
+	for item in username_turple:
 		username_list.append(item[0])
 	user = input("请输入你要注册的账户名:\n")
 	while user in username_list:
@@ -64,7 +64,7 @@ def initdb(db):
 	except:
 		pass
 	try:
-		db.execute("create table submission(id integer primary key ,\
+		dx.execute("create table submission(id integer primary key ,\
 											username varchar(20),\
 											answers varchar(50),\
 											score INT);")
@@ -97,21 +97,21 @@ def addquestion(db):
 def cre8exam(num, db):
 	dx = db.cursor()
 	dx.execute("select id, type, description, options from question")
-	problem_tuple = dx.fetchall()
+	problem_turple = dx.fetchall()
 	problem_list = list()
 	src_list = list()
-	while int(num) > len(problem_tuple):
-		print("题库目前只有" + str(len(problem_tuple)) + "道题目，请输入小于等于" + str(len(problem_tuple)) + "的数目")
+	while int(num) > len(problem_turple):
+		print("题库目前只有" + str(len(problem_turple)) + "道题目，请输入小于等于" + str(len(problem_turple)) + "的数目")
 		num = input("请输入你需要的题目数量:\n")
 	num = int(num)
 	randm = list()
-	for i in range(0, len(problem_tuple)):
+	for i in range(0, len(problem_turple)):
 		randm.append(i)
 	random.shuffle(randm)
 	randm = randm[:num]
 	for i in randm:
-		problem_list.append(problem_tuple[i])
-		src_list.append(problem_tuple[i][0])
+		problem_list.append(problem_turple[i])
+		src_list.append(problem_turple[i][0])
 	return problem_list, src_list
 
 def exam(num, problem):
@@ -139,9 +139,69 @@ def judge(ans, st):
 def submit(user, ans, src, db):
 	dx = db.cursor()
 	dx.execute("select id, st_answer from question")
-	problem_tuple = dx.fetchall()
+	problem_turple = dx.fetchall()
 	standard = ""
 	for i in src:
-		standard += problem_tuple[i-1][1]
+		standard += problem_turple[i-1][1]
 	score = judge(ans, standard)
 	return score
+
+def delequestion(db):
+	dx = db.cursor()
+	dx.execute("select id, type, description, options, st_answer from question")
+	problem_list = dx.fetchall()
+	if len(problem_list) == 0:
+		print("题库中暂时没有题目,请尝试添加题目!")
+		return
+	print("现在为你列出所有的题目")
+	for item in problem_list:
+		print(str(item[0]) + " (" + item[1] + ") " + item[2])
+	select = input("请输入你要删除的题目编号:\n")
+	while int(select) <= 0 or int(select) > len(problem_list):
+		print("编号不存在,请重试!")
+		select = input("请输入你要删除的题目编号:\n")
+	select = int(select)
+	problem_list.pop(select-1)
+	dx.execute("drop table question;")
+	dx.execute("create table question(	id integer primary key autoincrement,\
+										type varchar(20),\
+										description varchar(50),\
+										options varchar(50),\
+										st_answer varchar(50));")
+	for item in problem_list:
+		dx.execute('INSERT INTO question(type, description, options, st_answer) VALUES(?,?,?,?)',(item[1], item[2], item[3], item[4]))
+	db.commit()
+	print("删除成功!")
+
+def modiquestion(db):
+	dx = db.cursor()
+	dx.execute("select id, type, description, options, st_answer from question")
+	problem_list = dx.fetchall()
+	if len(problem_list) == 0:
+		print("题库中暂时没有题目,请尝试添加题目!")
+		return
+	print("现在为你列出所有的题目")
+	for item in problem_list:
+		print(str(item[0]) + " (" + item[1] + ") " + item[2])
+	select = input("请输入你要修改的题目编号:\n")
+	while int(select) <= 0 or int(select) > len(problem_list):
+		print("编号不存在,请重试!")
+		select = input("请输入你要修改的题目编号:\n")
+	questype = input("请输入问题的类型(选择or判断):\n")
+	description = input("请输入问题的描述:\n")
+	options = ""
+	if questype == "选择":
+		chc = 65
+		for i in range(0, 4):
+			options += chr(chc) + " "
+			options += input("请输入"+chr(chc)+"的选项:\n")
+			chc += 1
+			options += "\n"
+		print(options)
+	st_ans = input("请输入标准答案:\n")
+	dx.execute("UPDATE question set type = '" + questype +  "' where id=" + select)
+	dx.execute("UPDATE question set description = '" + description +  "' where id=" + select)
+	dx.execute("UPDATE question set options = '" + options +  "' where id=" + select)
+	dx.execute("UPDATE question set st_answer = '" + st_ans +  "' where id=" + select)
+	db.commit()
+	print("修改成功!")

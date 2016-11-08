@@ -32,15 +32,21 @@ print("登录成功!\n")
 
 while 1:
 	if AUTH == "admin":
-		select = input("1.加入题目\n2.退出\n")
-		if select != "2" and select != "1":
+		select = input("1.加入题目\n2.修改题目\n3.删除题目\n4.退出\n")
+		if select != 4 and select != "1" and select != "2" and select != "3":
 			print("请输入正确的选项！")
 			continue
-		elif select == "2":
+		elif select == "4":
 			quit()
 		elif select == "1":
 			print("你选择了'1.加入题目'")
 			modules.addquestion(db)
+		elif select == "2":
+			print("你选择了'2.修改题目'")
+			modules.modiquestion(db)
+		elif select == "3":
+			print("你选择了'2.删除题目'")
+			modules.delequestion(db)
 	elif AUTH == "user":
 		select = input("1.生成考试\n2.退出\n")
 		if select != "2" and select != "1":
@@ -63,4 +69,5 @@ while 1:
 			select = input("是否要继续(Yes or No):\n")
 			if select.lower() == "no":
 				quit()
+
 db.close()
