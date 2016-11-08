@@ -1,10 +1,11 @@
 import os
 import sqlite3
 import random
+import getpass
 
 def login(db):
 	user = input("请输入你要登录的账户名:\n")
-	password = input("请输入你的密码:\n")
+	password = getpass.getpass("请输入你的密码:\n")
 	dx = db.cursor()
 	dx.execute("select username, password, authority  from auth")
 	user_turple = dx.fetchall()
@@ -70,6 +71,12 @@ def initdb(db):
 											score INT);")
 	except:
 		pass
+	try:
+		dx.execute("create table userstat(	username varchar(20),\
+											examnum integer,\
+											record text);")
+	except:
+		pass
 	db.commit()
 
 def addquestion(db):
@@ -127,7 +134,7 @@ def exam(num, problem):
 			ans += input("请选择（T或者F):\n").upper()
 	return ans
 
-def judge(ans, st):
+def judge(ans, st):	#修改
 	print("正在判分，请稍等...")
 	tot = len(st)
 	score = 100
@@ -136,7 +143,20 @@ def judge(ans, st):
 			score -= 100 // tot;
 	return score
 
-def submit(user, ans, src, db):
+'''
+
+1:
+60;
+2B 4T 5D 6A 7F;
+2:
+100;
+3:
+90;
+9D;
+
+'''
+
+def submit(user, ans, src, db):	#修改
 	dx = db.cursor()
 	dx.execute("select id, st_answer from question")
 	problem_turple = dx.fetchall()
@@ -205,3 +225,7 @@ def modiquestion(db):
 	dx.execute("UPDATE question set st_answer = '" + st_ans +  "' where id=" + select)
 	db.commit()
 	print("修改成功!")
+
+def examstat(db):
+	#给出他的所有的平均分
+	#给出所有做错的题目和正确的答案

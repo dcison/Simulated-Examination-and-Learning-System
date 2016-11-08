@@ -28,7 +28,7 @@ elif select == "1":
 while IS_LOG == False:
 	USERNAME, IS_LOG, AUTH = modules.login(db)
 
-print("登录成功!\n")
+print(USERNAME + " 登录成功!(" + AUTH + ")\n")
 
 while 1:
 	if AUTH == "admin":
@@ -48,11 +48,11 @@ while 1:
 			print("你选择了'2.删除题目'")
 			modules.delequestion(db)
 	elif AUTH == "user":
-		select = input("1.生成考试\n2.退出\n")
-		if select != "2" and select != "1":
+		select = input("1.生成考试\n2.考试统计\n3.退出\n")
+		if elect != "3" and select != "2" and select != "1":
 			print("请输入正确的选项！")
 			continue
-		if select == "2":
+		if select == "3":
 			quit()
 		elif select == "1":
 			print("你选择了1.生成考试")
@@ -69,5 +69,8 @@ while 1:
 			select = input("是否要继续(Yes or No):\n")
 			if select.lower() == "no":
 				quit()
+		elif select == "2":
+			print("你选择了2.考试统计")
+			modules.examstat(db)
 
 db.close()
