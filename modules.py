@@ -53,7 +53,7 @@ def regist(db):
 		password = input("请输入你的密码:\n")
 		repeat = input("请重新输入你的密码:\n")
 	dx.execute('INSERT INTO auth(username,password,authority) VALUES(?,?,?)',(user, password,"user"))
-	dx.execute('INSERT INTO userstat(username,examnum,examscore) VALUES(?,?,?)',(user,0,0))
+	dx.execute('INSERT INTO userstat(username,examnum,examscore,record) VALUES(?,?,?,?)',(user,0,0,"你还没有参加过考试"))
 	db.commit()
 
 def initdb(db):
@@ -130,6 +130,7 @@ def cre8exam(num, db):
 def exam(num, problem):
 	print("考试开始！")
 	ans = ""
+	print(problem)
 	for i in range(0, num):
 		print(str(i+1) + "." + problem[i][2])
 		if problem[i][1] == "选择":
@@ -180,9 +181,9 @@ def submit(user, ans,src, db):
 			for j in question_turple:
 				if(j[0]==src[i]):
 					if(j[1]=="选择"):
-						question_des += "你做错的题：\n"+str(wrong_num)+"(选择题)\n"+j[2] +"\n"+"选项是"+j[3]+"\n你的选项是：" + ans[i] +"\n"+"正确选项是：" + standard[i] +"\n"
+						question_des += "你做错的题：\n\n"+str(wrong_num)+"(选择题)\n"+j[2] +"\n"+"选项是"+j[3]+"\n你的选项是：" + ans[i] +"\n"+"正确选项是：" + standard[i] +"\n"
 					else:
-						question_des += "你做错的题：\n"+str(wrong_num)+"(判断题)\n"+j[2] +"\n你的选项是："+ ans[i] +"\n"+"正确选项是："  + standard[i] +"\n"
+						question_des += "你做错的题：\n\n"+str(wrong_num)+"(判断题)\n"+j[2] +"\n你的选项是："+ ans[i] +"\n"+"正确选项是："  + standard[i] +"\n"
 	dx.execute("select username,examnum from userstat")
 	users_turple = dx.fetchall()
 	for i in users_turple:
@@ -205,7 +206,7 @@ def submit(user, ans,src, db):
 	count_str = str(count + 1)
 	dx.execute("UPDATE userstat set examscore ="  + score_count_str + " where username='" + user +"'")
 	dx.execute("UPDATE userstat set examnum = " + count_str +  " where username='" + user +"'")
-	text += "第" +count_str+ "次考试:\n" +"这次考试成绩是："+ str(score) +"\n"+question_des
+	text += "第" +count_str+ "次考试:\n" +"这次考试成绩是："+ str(score) +"\n"+question_des +"\n"+"-"
 	dx.execute("UPDATE userstat set record = '" + text +  "' where username='" + user +"'")
 	db.commit()
 	return score
@@ -277,15 +278,40 @@ def examstat(user,db):
 	for i in user_text:
 		if (i[0] == user):
 			print ("你的平均分是:"+str(i[1]))
+			score_record = i[1]
 	dx.execute("select username,record from userstat")
 	user_exam = dx.fetchall()
+	text_list = []
+	text_str = ""
 	for i in user_exam:
+		if(i[0]==user):
+			text_str += i[1]
+	#print(text_str)
+	if (len(text_str)>9):
+		x=0
+		while len(text_str) > 1:
+			if (text_str[x]=="-"):
+				if (len(text_list)>0):
+					text_list.append(text_str[:x])
+					text_str = text_str[x+1:]
+				else:
+					text_list.append(text_str[9:x])
+					text_str = text_str[x+1:]
+			x += 1
+	#print (text_list)
+	count = len(text_list)
+	if (score_record == 0 and len(text_str)==9):
+		print ("你还没有参加考试")
+	else:
+		print (text_list[0])
+	for i in range(1,count):
 		select = input("1.查看下一场\n2.退出\n")
 		while select != "1" and select != "2":
 			print("请输入正确的选项!")
 			select = input("1.查看下一场\n2.退出\n")
 		if select == "2":
 			break
-		os.system("cls")
-		if(i[0]==user):
-			print(i[1])
+		if select == "1":
+			os.system("cls")
+			print (text_list[i])
+			
