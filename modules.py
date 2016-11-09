@@ -3,6 +3,14 @@ import sqlite3
 import random
 import getpass
 
+def judgenum(str):
+	for i in range(0, len(str)):
+		if ord(str[i]) < 48 or ord(str[i]) > 57:
+			return False
+	if int(str) <= 0:
+		return False
+	return True
+
 def login(db):
 	user = input("请输入你要登录的账户名:\n")
 	password = getpass.getpass("请输入你的密码:\n")
@@ -45,6 +53,7 @@ def regist(db):
 		password = input("请输入你的密码:\n")
 		repeat = input("请重新输入你的密码:\n")
 	dx.execute('INSERT INTO auth(username,password,authority) VALUES(?,?,?)',(user, password,"user"))
+	dx.execute('INSERT INTO userstat(username,examnum,examscore) VALUES(?,?,?)',(user,0,0))
 	db.commit()
 
 def initdb(db):
@@ -65,14 +74,8 @@ def initdb(db):
 	except:
 		pass
 	try:
-		dx.execute("create table submission(id integer primary key ,\
-											username varchar(20),\
-											answers varchar(50),\
-											score INT);")
-	except:
-		pass
-	try:
 		dx.execute("create table userstat(	username varchar(20),\
+											examscore integer,\
 											examnum integer,\
 											record text);")
 	except:
@@ -110,6 +113,9 @@ def cre8exam(num, db):
 	while int(num) > len(problem_turple):
 		print("题库目前只有" + str(len(problem_turple)) + "道题目，请输入小于等于" + str(len(problem_turple)) + "的数目")
 		num = input("请输入你需要的题目数量:\n")
+		while judgenum(num) == False:
+			print("请输入正确的数量")
+			num = input("请输入你需要的题目数量:\n")
 	num = int(num)
 	randm = list()
 	for i in range(0, len(problem_turple)):
@@ -129,41 +135,79 @@ def exam(num, problem):
 		if problem[i][1] == "选择":
 			print(problem[i][3])
 		if problem[i][1] == "选择":
-			ans += input("请选择（A,B,C或者D):\n").upper()
+			select = input("请选择（A,B,C或者D):\n").upper()
+			while select != "A" and select != "B" and select != "C" and select != "D":
+				print("请输入正确的选择!")
+				select = input("请选择（A,B,C或者D):\n").upper()
+			ans += select
 		elif problem[i][1] == "判断":
-			ans += input("请选择（T或者F):\n").upper()
+			select = input("请选择（T或者F):\n").upper()
+			while select != "T" and select != "F":
+				print("请输入正确的选择!")
+				select = input("请选择（T或者F):\n").upper()
+			ans += select
 	return ans
 
-def judge(ans, st):	#修改
+def judge(ans, st):
 	print("正在判分，请稍等...")
 	tot = len(st)
-	score = 100
+	score = 100.0
 	for i in range(0, tot):
 		if ans[i] != st[i]:
-			score -= 100 // tot;
-	return score
+			score -= 100 / tot;
+	return int(score)
 
-'''
-
-1:
-60;
-2B 4T 5D 6A 7F;
-2:
-100;
-3:
-90;
-9D;
-
-'''
-
-def submit(user, ans, src, db):	#修改
+def submit(user, ans,src, db):
 	dx = db.cursor()
 	dx.execute("select id, st_answer from question")
 	problem_turple = dx.fetchall()
 	standard = ""
+	wrong_answer = ""
+	correct_answer = ""
+	question_des = ""
 	for i in src:
 		standard += problem_turple[i-1][1]
 	score = judge(ans, standard)
+	tot = len(standard)
+	wrong_num = 0
+	for i in range(0, tot):
+		if ans[i] != standard[i]:
+			wrong_num += 1
+			wrong_answer += str(src[i]) + ans[i] +" "
+			correct_answer += str(src[i]) + standard[i] +" "
+			dx.execute("select id,type,description,options from question")
+			question_turple = dx.fetchall()
+			for j in question_turple:
+				if(j[0]==src[i]):
+					if(j[1]=="选择"):
+						question_des += "你做错的题：\n"+str(wrong_num)+"(选择题)\n"+j[2] +"\n"+"选项是"+j[3]+"\n你的选项是：" + ans[i] +"\n"+"正确选项是：" + standard[i] +"\n"
+					else:
+						question_des += "你做错的题：\n"+str(wrong_num)+"(判断题)\n"+j[2] +"\n你的选项是："+ ans[i] +"\n"+"正确选项是："  + standard[i] +"\n"
+	dx.execute("select username,examnum from userstat")
+	users_turple = dx.fetchall()
+	for i in users_turple:
+		if (i[0] == user):
+			count = i[1]
+	dx.execute("select username,examscore from userstat")
+	score_turple = dx.fetchall()
+	score_count = 0
+	for i in score_turple:
+		if (i[0] == user):
+			score_count = (i[1]*count+score)/(count+1)
+	text=""
+	dx.execute("select username,record from userstat")
+	record_old = dx.fetchall()
+	for i in record_old:
+		if(i[0] == user):
+			if(i[1] != None):
+				text += i[1]
+	score_count_str = str(score_count)
+	count_str = str(count + 1)
+	dx.execute("UPDATE userstat set examscore ="  + score_count_str + " where username='" + user +"'")
+	dx.execute("UPDATE userstat set examnum = " + count_str +  " where username='" + user +"'")
+	text += "第" +count_str+ "次考试:\n" +"这次考试成绩是："+ str(score) +"\n"+question_des
+	dx.execute("UPDATE userstat set record = '" + text +  "' where username='" + user +"'")
+	db.commit()
 	return score
 
 def delequestion(db):
@@ -226,6 +270,22 @@ def modiquestion(db):
 	db.commit()
 	print("修改成功!")
 
-def examstat(db):
-	#给出他的所有的平均分
-	#给出所有做错的题目和正确的答案
+def examstat(user,db):
+	dx = db.cursor()
+	dx.execute("select username,examscore from userstat")
+	user_text = dx.fetchall()
+	for i in user_text:
+		if (i[0] == user):
+			print ("你的平均分是:"+str(i[1]))
+	dx.execute("select username,record from userstat")
+	user_exam = dx.fetchall()
+	for i in user_exam:
+		select = input("1.查看下一场\n2.退出\n")
+		while select != "1" and select != "2":
+			print("请输入正确的选项!")
+			select = input("1.查看下一场\n2.退出\n")
+		if select == "2":
+			break
+		os.system("cls")
+		if(i[0]==user):
+			print(i[1])
