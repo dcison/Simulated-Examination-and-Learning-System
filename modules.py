@@ -130,7 +130,6 @@ def cre8exam(num, db):
 def exam(num, problem):
 	print("考试开始！")
 	ans = ""
-	print(problem)
 	for i in range(0, num):
 		print(str(i+1) + "." + problem[i][2])
 		if problem[i][1] == "选择":
@@ -286,19 +285,19 @@ def examstat(user,db):
 	for i in user_exam:
 		if(i[0]==user):
 			text_str += i[1]
-	#print(text_str)
 	if (len(text_str)>9):
 		x=0
 		while len(text_str) > 1:
-			if (text_str[x]=="-"):
+			if (text_str[x]=="-" and (x+1)<=len(text_str)):
 				if (len(text_list)>0):
 					text_list.append(text_str[:x])
 					text_str = text_str[x+1:]
+					x = -1
 				else:
 					text_list.append(text_str[9:x])
 					text_str = text_str[x+1:]
+					x = -1
 			x += 1
-	#print (text_list)
 	count = len(text_list)
 	if (score_record == 0 and len(text_str)==9):
 		print ("你还没有参加考试")
@@ -314,4 +313,3 @@ def examstat(user,db):
 		if select == "1":
 			os.system("cls")
 			print (text_list[i])
-			
